@@ -31,10 +31,10 @@ class BinanceBalance(Resource):
 
             # Determinar acción y enviar mensaje si es necesario
             mensaje = ""
-            if valor_total_usdt > 25:
+            if valor_total_usdt > 51:
                 mensaje = "Es momento de vender para ganar. Valor total: {:.2f} USDT".format(valor_total_usdt)
                 asyncio.run(bot.send_message(chat_id=chat_id, text=mensaje))
-            elif valor_total_usdt < 23:
+            elif valor_total_usdt < 47:
                 mensaje = "Estás perdiendo, debes vender. Valor total: {:.2f} USDT".format(valor_total_usdt)
                 asyncio.run(bot.send_message(chat_id=chat_id, text=mensaje))
 
@@ -57,7 +57,7 @@ class SpotBalance(Resource):
 
         resultado = []
         for asset in balance['balances']:
-            cantidad = float(asset['locked'])
+            cantidad = float(asset['free'])
             if cantidad > 0:
                 simbolo = asset['asset'] + 'USDT'
                 precio_usdt = next((item['price'] for item in precios if item['symbol'] == simbolo), None)
