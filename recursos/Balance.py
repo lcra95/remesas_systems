@@ -4,6 +4,11 @@ from binance.client import Client
 from binance.exceptions import BinanceAPIException
 from telegram import Bot
 import asyncio
+from connections.db_connection import Base, SessionLocal
+from datetime import datetime
+Transaccion = Base.classes.transaccion
+
+
 api_key = 'iVT1aRRukap9b12jlFqrjU8ix0QOREoffD41Ey1VvLEPRWDDXt0fL2PyYVxQaQrm'
 api_secret = '4byprzjIvjJfIbo0bbkg2o27buy1oFzMw0l6DydHe7y1ZdbAxF9XtszR5e5T0IKn'
 class BinanceBalance(Resource):
@@ -18,18 +23,18 @@ class BinanceBalance(Resource):
             client = Client(api_key, api_secret)
             bot = Bot(token)
 
-            # Consultar el balance de AMP y obtener el precio actual
-            balance_AMP = client.get_asset_balance(asset='AMP')
-            cantidad_AMP = float(balance_AMP['free']) + float(balance_AMP['locked'])
-            precio_actual = float(client.get_symbol_ticker(symbol="AMPUSDT")['price'])
-            valor_total_usdt = cantidad_AMP * precio_actual
+            # Consultar el balance de VTHO y obtener el precio actual
+            balance_VTHO = client.get_asset_balance(asset='VTHO')
+            cantidad_VTHO = float(balance_VTHO['free']) + float(balance_VTHO['locked'])
+            precio_actual = float(client.get_symbol_ticker(symbol="VTHOUSDT")['price'])
+            valor_total_usdt = cantidad_VTHO * precio_actual
 
             # Determinar acción y enviar mensaje si es necesario
             mensaje = ""
-            if valor_total_usdt > 30:
+            if valor_total_usdt > 25:
                 mensaje = "Es momento de vender para ganar. Valor total: {:.2f} USDT".format(valor_total_usdt)
                 asyncio.run(bot.send_message(chat_id=chat_id, text=mensaje))
-            elif valor_total_usdt < 28:
+            elif valor_total_usdt < 23:
                 mensaje = "Estás perdiendo, debes vender. Valor total: {:.2f} USDT".format(valor_total_usdt)
                 asyncio.run(bot.send_message(chat_id=chat_id, text=mensaje))
 
@@ -94,4 +99,46 @@ class VentaSimbolo(Resource):
                 return {"mensaje": "No hay suficientes activos para vender"}
 
         except BinanceAPIException as e:
+            return {"error": str(e)}
+        
+
+
+
+class CompraSimbolo(Resource):
+    def post(self):
+        datos = request.json
+        simbolo = datos['simbolo']
+        cantidad_usdt = datos['cantidad_usdt']
+
+        session = SessionLocal()
+        client = Client(api_key, api_secret)
+        
+        try:
+            # Obtener precio actual del símbolo en USDT
+            precio_actual = float(client.get_symbol_ticker(symbol=f"{simbolo}USDT")['price'])
+
+            # Calcular la cantidad del símbolo a comprar
+            cantidad_simbolo = cantidad_usdt / precio_actual
+            cantidad_simbolo=  round(cantidad_simbolo,4 )
+            # Crear una orden de compra
+            orden = client.order_market_buy(symbol=f"{simbolo}USDT", quantity=cantidad_simbolo)
+
+            # Registrar la transacción en la base de datos
+            session = SessionLocal()
+            nueva_transaccion = Transaccion(
+                symbol=simbolo,
+                monto_usdt=str(cantidad_usdt),
+                cantidad=str(cantidad_simbolo),
+                estado=1,  # Estado de la transacción, asumiendo 1 para completado
+                tipo_transaccion=1,  # 1 para compra
+                fecha=datetime.now()
+            )
+            session.add(nueva_transaccion)
+            session.commit()
+            session.close()
+
+            return {"mensaje": "Orden de compra creada y registrada en la base de datos", "orden": orden}
+
+        except BinanceAPIException as e:
+            session.close()
             return {"error": str(e)}
