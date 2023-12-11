@@ -6,6 +6,7 @@ import json
 from bs4 import BeautifulSoup
 from flask_cors import CORS
 from recursos.ValorIndicador import ValorIndicador
+from recursos.Balance import BinanceBalance, SpotBalance, VentaSimbolo
 from helpers.binance import Binance
 
 logging.basicConfig(level=logging.DEBUG)
@@ -14,8 +15,9 @@ app = Flask(__name__)
 CORS(app)
 api = Api(app)
 api.add_resource(ValorIndicador, "/get_indicadores")
-
-
+api.add_resource(BinanceBalance, '/balance')
+api.add_resource(SpotBalance, '/spot-balance')
+api.add_resource(VentaSimbolo, '/venta-simbolo/<string:simbolo>')
 @app.route('/')
 def home():
     return ":)"

@@ -1,0 +1,97 @@
+from flask import request
+from flask_restful import Resource
+from binance.client import Client
+from binance.exceptions import BinanceAPIException
+from telegram import Bot
+import asyncio
+api_key = 'iVT1aRRukap9b12jlFqrjU8ix0QOREoffD41Ey1VvLEPRWDDXt0fL2PyYVxQaQrm'
+api_secret = '4byprzjIvjJfIbo0bbkg2o27buy1oFzMw0l6DydHe7y1ZdbAxF9XtszR5e5T0IKn'
+class BinanceBalance(Resource):
+
+    @staticmethod
+    def get():
+        try:
+            api_key = 'iVT1aRRukap9b12jlFqrjU8ix0QOREoffD41Ey1VvLEPRWDDXt0fL2PyYVxQaQrm'
+            api_secret = '4byprzjIvjJfIbo0bbkg2o27buy1oFzMw0l6DydHe7y1ZdbAxF9XtszR5e5T0IKn'
+            token = '6609889311:AAFIVvD_0pJuz7myNLsy0QJzYo5TNDp1kKk'
+            chat_id = '5090328284'
+            client = Client(api_key, api_secret)
+            bot = Bot(token)
+
+            # Consultar el balance de AMP y obtener el precio actual
+            balance_AMP = client.get_asset_balance(asset='AMP')
+            cantidad_AMP = float(balance_AMP['free']) + float(balance_AMP['locked'])
+            precio_actual = float(client.get_symbol_ticker(symbol="AMPUSDT")['price'])
+            valor_total_usdt = cantidad_AMP * precio_actual
+
+            # Determinar acción y enviar mensaje si es necesario
+            mensaje = ""
+            if valor_total_usdt > 30:
+                mensaje = "Es momento de vender para ganar. Valor total: {:.2f} USDT".format(valor_total_usdt)
+                asyncio.run(bot.send_message(chat_id=chat_id, text=mensaje))
+            elif valor_total_usdt < 28:
+                mensaje = "Estás perdiendo, debes vender. Valor total: {:.2f} USDT".format(valor_total_usdt)
+                asyncio.run(bot.send_message(chat_id=chat_id, text=mensaje))
+
+            print(f"Valor Actual {valor_total_usdt}")
+            return {"valor_total_usdt": valor_total_usdt, "mensaje": mensaje}
+
+        except BinanceAPIException as e:
+            print(e)
+            return {"error": str(e)}
+
+class SpotBalance(Resource):
+    @staticmethod
+    def get():
+        return SpotBalance.obtener_balance_spot(api_key, api_secret)    
+    
+    def obtener_balance_spot(api_key, api_secret):
+        client = Client(api_key, api_secret)
+        balance = client.get_account()
+        precios = client.get_all_tickers()
+
+        resultado = []
+        for asset in balance['balances']:
+            cantidad = float(asset['locked'])
+            if cantidad > 0:
+                simbolo = asset['asset'] + 'USDT'
+                precio_usdt = next((item['price'] for item in precios if item['symbol'] == simbolo), None)
+                if precio_usdt:
+                    valor_total = cantidad * float(precio_usdt)
+                    resultado.append({
+                        'simbolo': simbolo,
+                        'cantidad': cantidad,
+                        'precio_usdt': float(precio_usdt),
+                        'valor_total': valor_total
+                    })
+
+        return resultado
+    
+class VentaSimbolo(Resource):
+    def post(self, simbolo):
+        client = Client(api_key, api_secret)
+        
+        try:
+            # Obtener balance del símbolo
+            balance = client.get_asset_balance(asset=simbolo)
+            cantidad = float(balance['locked'])
+
+            # Obtener precio actual
+            precio_actual = float(client.get_symbol_ticker(symbol=f"{simbolo}USDT")['price'])
+            valor_total = cantidad * precio_actual
+
+            # Crear una orden de venta
+            if cantidad > 0:
+                orden = client.order_market_sell(symbol=f"{simbolo}USDT", quantity=cantidad)
+                return {
+                    "mensaje": "Orden de venta creada",
+                    "cantidad": cantidad,
+                    "precio_actual": precio_actual,
+                    "valor_total": valor_total,
+                    "orden": orden
+                }
+            else:
+                return {"mensaje": "No hay suficientes activos para vender"}
+
+        except BinanceAPIException as e:
+            return {"error": str(e)}

@@ -12,3 +12,5 @@ mysqlclient
 flask-restful
 requests
 beautifulsoup4
+python-binance
+python-telegram-bot
