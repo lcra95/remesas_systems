@@ -23,18 +23,18 @@ class BinanceBalance(Resource):
             client = Client(api_key, api_secret)
             bot = Bot(token)
 
-            # Consultar el balance de VTHO y obtener el precio actual
-            balance_VTHO = client.get_asset_balance(asset='VTHO')
-            cantidad_VTHO = float(balance_VTHO['free']) + float(balance_VTHO['locked'])
-            precio_actual = float(client.get_symbol_ticker(symbol="VTHOUSDT")['price'])
-            valor_total_usdt = cantidad_VTHO * precio_actual
+            # Consultar el balance de BEAMX y obtener el precio actual
+            balance_BEAMX = client.get_asset_balance(asset='BEAMX')
+            cantidad_BEAMX = float(balance_BEAMX['free']) + float(balance_BEAMX['locked'])
+            precio_actual = float(client.get_symbol_ticker(symbol="BEAMXUSDT")['price'])
+            valor_total_usdt = cantidad_BEAMX * precio_actual
 
             # Determinar acción y enviar mensaje si es necesario
             mensaje = ""
-            if valor_total_usdt > 56:
+            if valor_total_usdt > 50:
                 mensaje = "Es momento de vender para ganar. Valor total: {:.2f} USDT".format(valor_total_usdt)
                 asyncio.run(bot.send_message(chat_id=chat_id, text=mensaje))
-            elif valor_total_usdt < 52:
+            elif valor_total_usdt < 48:
                 mensaje = "Estás perdiendo, debes vender. Valor total: {:.2f} USDT".format(valor_total_usdt)
                 asyncio.run(bot.send_message(chat_id=chat_id, text=mensaje))
 
