@@ -31,10 +31,10 @@ class BinanceBalance(Resource):
 
             # Determinar acción y enviar mensaje si es necesario
             mensaje = ""
-            if valor_total_usdt > 51:
+            if valor_total_usdt > 56:
                 mensaje = "Es momento de vender para ganar. Valor total: {:.2f} USDT".format(valor_total_usdt)
                 asyncio.run(bot.send_message(chat_id=chat_id, text=mensaje))
-            elif valor_total_usdt < 47:
+            elif valor_total_usdt < 52:
                 mensaje = "Estás perdiendo, debes vender. Valor total: {:.2f} USDT".format(valor_total_usdt)
                 asyncio.run(bot.send_message(chat_id=chat_id, text=mensaje))
 
