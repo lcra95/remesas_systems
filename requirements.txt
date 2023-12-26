@@ -14,3 +14,5 @@ requests
 beautifulsoup4
 python-binance
 python-telegram-bot
+numpy
+TA-Lib

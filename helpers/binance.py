@@ -1,102 +1,107 @@
-import json
+import os
+import time
+import numpy as np
+from binance.client import Client
+import talib
+import logging
+from modelos.Credencial import get_credential_by_name
+from helpers.telegram import TelegramHelper
+api_key = get_credential_by_name('BINANCE_API_KEY')
+api_secret = get_credential_by_name('BINANCE_SECRET')
+client = Client(api_key, api_secret)
+
+class BinanceHelper:
+    def get_current_price(symbol):
+        ticker = client.get_symbol_ticker(symbol=symbol)
+        return float(ticker['price'])
+
+    def calculate_percentage_change(current_price, purchase_price):
+        if purchase_price:
+            return (current_price - purchase_price) / purchase_price * 100
+        else:
+            return 0
 
 
-class Binance:
+    def get_close_prices(symbol, interval, lookback):
+        candles = client.get_klines(symbol=symbol, interval=interval, limit=lookback)
+        close_prices = [float(candle[4]) for candle in candles]
+        return np.array(close_prices)
 
-    @staticmethod
-    def credenciales():
-        credentials = {
-            "url": "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
-            "apiKey": "X3mF4XZj3aZEbeQHrXxA0a5Ll10BVK763RiOksF1L1xEjRa9Jfjvu1HjA0jwcElW",
-            "secretKey": "TcTjrTinyFoWyDa5IaOViWsmu4gHQMBhUzuhkbzji2gp0OAU3YRmpWNlV88F65cd",
-            "comment": "gestionTasa"
-        }
 
-        return credentials
+    def calculate_rsi(prices, period=14):
+        rsi = talib.RSI(prices, timeperiod=period)
+        return rsi
 
-    @staticmethod
-    def consulta_bs(bs=None):
-        if bs is None:
-            bs = 4000
-        import http.client
 
-        conn = http.client.HTTPSConnection("p2p.binance.com")
+    def get_lot_size(client, symbol):
+        info = client.get_symbol_info(symbol)
+        for filter in info['filters']:
+            if filter['filterType'] == 'LOT_SIZE':
+                return {
+                    'minQty': float(filter['minQty']),
+                    'maxQty': float(filter['maxQty']),
+                    'stepSize': float(filter['stepSize'])
+                }
+        return None
 
-        payload = {
-            "proMerchantAds": False,
-            "page": 1,
-            "rows": 1,
-            "payTypes": ["PagoMovil"
-                         ],
-            "countries": [],
-            "publisherType": "merchant",
-            "transAmount": str(bs),
-            "asset": "USDT",
-            "fiat": "VES",
-            "tradeType": "SELL"
-        }
 
-        headers = {
-            'cookie': "cid=1mnKK17m",
-            'authority': "p2p.binance.com",
-            'accept': "*/*",
-            'accept-language': "es-CL,es-419;q=0.9,es;q=0.8",
-            'bnc-uuid': "9d0e0910-7aac-49fd-aab1-437d4f1097f8",
-            'c2ctype': "c2c_merchant",
-            'clienttype': "web",
-            'content-type': "application/json",
-            'lang': "es",
-            'origin': "https://p2p.binance.com",
-            'referer': "https://p2p.binance.com/es/trade/sell/USDT?fiat=VES&payment=PagoMovil",
-        }
+    def adjust_quantity(quantity, step_size):
+        return round(quantity - (quantity % step_size), len(str(step_size).split('.')[1]))
 
-        conn.request("POST", "/bapi/c2c/v2/friendly/c2c/adv/search", json.dumps(payload), headers)
 
-        res = conn.getresponse()
-        data = res.read()
+    def buy_crypto(client, symbol, amount_usd):
+        current_price = BinanceHelper.get_current_price(symbol)
+        lot_size = BinanceHelper.get_lot_size(client, symbol)
 
-        return json.loads(data)
+        if lot_size:
+            quantity = amount_usd / current_price
+            quantity = BinanceHelper.adjust_quantity(quantity, lot_size['stepSize'])
 
-    @staticmethod
-    def consulta_clp(clp=None):
-        if clp is None:
-            clp = 20000
+            if quantity < lot_size['minQty'] or quantity > lot_size['maxQty']:
+                logging.error("Cantidad fuera del rango permitido por LOT_SIZE")
+                print("Cantidad fuera del rango permitido por LOT_SIZE")
+                return None
 
-        print(clp)
-        import http.client
+            try:
+                order = client.order_market_buy(symbol=symbol, quantity=quantity)
+                logging.info(f"Orden de compra ejecutada: {order}")
+                print(f"Orden de compra ejecutada: {order}")
+                TelegramHelper.send_telegram_message(f"Compra de {symbol} a {current_price} la cantidad de {quantity} ")
+                return order
+            except Exception as e:
+                logging.error(f"Error al realizar la compra: {e}")
+                print(f"Error al realizar la compra: {e}")
+                return None
+        else:
+            logging.error("No se pudo obtener la información de LOT_SIZE")
+            print("No se pudo obtener la información de LOT_SIZE")
+            return None
 
-        conn = http.client.HTTPSConnection("p2p.binance.com")
 
-        payload = {
-            "proMerchantAds": False,
-            "page": 1,
-            "rows": 1,
-            "payTypes": [],
-            "countries": [],
-            "publisherType": None,
-            "transAmou": str(int(clp)),
-            "asset": "USDT",
-            "fiat": "CLP",
-            "tradeType": "BUY"
-        }
-        print(payload)
-        headers = {
-            'cookie': "cid=1mnKK17m",
-            'authority': "p2p.binance.com",
-            'accept': "*/*",
-            'accept-language': "es-CL,es-419;q=0.9,es;q=0.8",
-            'bnc-uuid': "9d0e0910-7aac-49fd-aab1-437d4f1097f8",
-            'c2ctype': "c2c_merchant",
-            'clienttype': "web",
-            'content-type': "application/json",
-            'lang': "es",
-            'origin': "https://p2p.binance.com",
-            'referer': "https://p2p.binance.com/es/trade/all-payments/USDT?fiat=CLP"
-        }
+    def sell_crypto(client, symbol):
+        try:
+            balance = client.get_asset_balance(asset=symbol.replace("USDT", ""))
+            quantity = float(balance['free'])
+            lot_size = BinanceHelper.get_lot_size(client, symbol)
 
-        conn.request("POST", "/bapi/c2c/v2/friendly/c2c/adv/search", json.dumps(payload), headers)
+            if lot_size:
+                quantity = BinanceHelper.adjust_quantity(quantity, lot_size['stepSize'])
 
-        res = conn.getresponse()
-        data = res.read()
+                if quantity < lot_size['minQty'] or quantity > lot_size['maxQty']:
+                    logging.error("Cantidad de venta fuera del rango permitido por LOT_SIZE")
+                    print("Cantidad de venta fuera del rango permitido por LOT_SIZE")
+                    return None
 
-        return json.loads(data)
+                order = client.order_market_sell(symbol=symbol, quantity=quantity)
+                logging.info(f"Orden de venta ejecutada: {order}")
+                print(f"Orden de venta ejecutada: {order}")
+                TelegramHelper.send_telegram_message(f"Venta {symbol} la cantidad de {quantity}")
+                return order
+            else:
+                logging.error("No se pudo obtener la información de LOT_SIZE para la venta")
+                print("No se pudo obtener la información de LOT_SIZE para la venta")
+                return None
+        except Exception as e:
+            logging.error(f"Error al realizar la venta: {e}")
+            print(f"Error al realizar la venta: {e}")
+            return None

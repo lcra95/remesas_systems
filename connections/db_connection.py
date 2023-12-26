@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
+from contextlib import contextmanager
 
 load_dotenv()
 
@@ -27,7 +28,7 @@ Base.prepare(engine, reflect=True)
 
 SessionLocal = sessionmaker(bind=engine)
 
-
+@contextmanager
 def get_db_session():
     session = SessionLocal()
     try:
