@@ -6,16 +6,20 @@ import talib
 import logging
 from modelos.Credencial import get_credential_by_name
 from helpers.telegram import TelegramHelper
+from helpers.error_handler import handle_exception
 api_key = get_credential_by_name('BINANCE_API_KEY')
 api_secret = get_credential_by_name('BINANCE_SECRET')
 client = Client(api_key, api_secret)
 
 class BinanceHelper:
     def get_current_price(symbol):
-        ticker = client.get_symbol_ticker(symbol=symbol)
-        return float(ticker['price'])
-
+        try:
+            ticker = client.get_symbol_ticker(symbol=symbol)
+            return float(ticker['price'])
+        except Exception as e:
+            handle_exception(e)
     def calculate_percentage_change(current_price, purchase_price):
+        
         if purchase_price:
             return (current_price - purchase_price) / purchase_price * 100
         else:
@@ -23,10 +27,12 @@ class BinanceHelper:
 
 
     def get_close_prices(symbol, interval, lookback):
-        candles = client.get_klines(symbol=symbol, interval=interval, limit=lookback)
-        close_prices = [float(candle[4]) for candle in candles]
-        return np.array(close_prices)
-
+        try:
+            candles = client.get_klines(symbol=symbol, interval=interval, limit=lookback)
+            close_prices = [float(candle[4]) for candle in candles]
+            return np.array(close_prices)
+        except Exception as e:
+            handle_exception(e)
 
     def calculate_rsi(prices, period=14):
         rsi = talib.RSI(prices, timeperiod=period)

@@ -6,6 +6,9 @@ from helpers.binance import BinanceHelper
 from helpers.error_handler import handle_exception
 from modelos.Transaccion import register_transaction, find_transactions_by_symbol_id
 from modelos.Rsi_calculos import register_rsi_calculation
+import requests
+import time
+
 class SimboloResource(Resource):
 
     @staticmethod
@@ -53,7 +56,7 @@ class getSymbols(Resource):
                     porcentaje = BinanceHelper.calculate_percentage_change(current_price, float(info_compra[0]["price"]))
                     
                     if virtual != 1:
-                        if porcentaje > 1   :
+                        if porcentaje > symbol["sell_percentage"]:
                             info_venta = BinanceHelper.sell_crypto(symbol["simbolo"])
                             vendido = True
                         elif porcentaje <= -symbol["stop_loss_percentage"]:
@@ -71,7 +74,10 @@ class getSymbols(Resource):
                             register_transaction(data_venta)
                             update_symbolo(symbol["id"], {"transaccion" : 2, "status" : 2})
                     else:
-                        getSymbols.venta_virtual(current_price, symbol["id"], info_compra[0]["cantidad"])
+                        if porcentaje > symbol["sell_percentage"]:
+                            getSymbols.venta_virtual(current_price, symbol["id"], info_compra[0]["cantidad"])
+                        elif porcentaje <= -symbol["stop_loss_percentage"]:
+                            getSymbols.venta_virtual(current_price, symbol["id"], info_compra[0]["cantidad"])
                 temp = {
                     "symbol" : symbol,
                     "rsi" : rsi[-1],
@@ -119,3 +125,19 @@ class getSymbols(Resource):
             "simbolo" : simbolo
         }
         register_rsi_calculation(info)
+
+class newSymbolsResource(Resource):
+    @staticmethod
+    def get():
+
+
+        response = requests.get('https://api.binance.com/api/v3/exchangeInfo')
+        data = response.json()
+        
+        # Aquí podrías filtrar o procesar los datos según tus necesidades
+        for symbol in data['symbols']:
+            print("-----------")
+            print(symbol)
+            print("------------")
+        return "hi"
+    
