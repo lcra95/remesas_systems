@@ -49,7 +49,7 @@ class BinanceHelper:
         return round(quantity - (quantity % step_size), len(str(step_size).split('.')[1]))
 
 
-    def buy_crypto(client, symbol, amount_usd):
+    def buy_crypto(symbol, amount_usd):
         current_price = BinanceHelper.get_current_price(symbol)
         lot_size = BinanceHelper.get_lot_size(client, symbol)
 
@@ -78,7 +78,7 @@ class BinanceHelper:
             return None
 
 
-    def sell_crypto(client, symbol):
+    def sell_crypto(symbol):
         try:
             balance = client.get_asset_balance(asset=symbol.replace("USDT", ""))
             quantity = float(balance['free'])
