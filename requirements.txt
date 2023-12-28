@@ -16,3 +16,5 @@ python-binance
 python-telegram-bot
 numpy
 TA-Lib
+openpyxl
+pandas

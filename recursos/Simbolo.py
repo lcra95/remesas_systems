@@ -52,9 +52,16 @@ class getSymbols(Resource):
                     else:
                         getSymbols.compra_virtual(current_price, symbol["amount_usdt"], symbol["id"])
                 elif symbol["transaccion"] == 1:
-                    info_compra = find_transactions_by_symbol_id(symbol["id"])
-                    porcentaje = BinanceHelper.calculate_percentage_change(current_price, float(info_compra[0]["price"]))
-                    
+                    try:
+                        info_compra = find_transactions_by_symbol_id(symbol["id"])
+                        if not info_compra:
+                            print(f"No se encontraron datos de compra para el símbolo: {symbol['simbolo']}")
+                            continue  # Salta a la siguiente iteración del bucle
+                        
+                        porcentaje = BinanceHelper.calculate_percentage_change(current_price, float(info_compra[0]["price"]))
+                    except Exception as e:
+                        handle_exception(e)
+                        print(e)
                     if virtual != 1:
                         if porcentaje > symbol["sell_percentage"]:
                             info_venta = BinanceHelper.sell_crypto(symbol["simbolo"])
