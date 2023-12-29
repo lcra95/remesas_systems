@@ -10,6 +10,7 @@ from recursos.Simbolo import SimboloResource , newSymbolsResource
 from recursos.Simbolo import getSymbols
 from recursos.Rsi import RsiCalculationsResource
 from modelos.NewSymbols import utilities
+from helpers.binance import BinanceHelper
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -28,9 +29,13 @@ def home():
 
 @app.route('/find')
 def find():
-
+    result = "None"
     list = utilities.check_new_symbols()
-    return {"list":list}
+    if len(list) > 0:
+        for simbolo in list:
+            result = BinanceHelper.buy_crypto(simbolo, 100)
+            
+    return result
 
 @app.route('/insert_simbolo')
 def insert():
