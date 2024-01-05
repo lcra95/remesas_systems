@@ -56,6 +56,11 @@ class BinanceHelper:
 
 
     def buy_crypto(symbol, amount_usd):
+        usdt = BinanceHelper.get_binance_usdt_balance()
+        if usdt < amount_usd:
+            amount_usd = usdt
+        elif usdt == 0:
+            return None
         current_price = BinanceHelper.get_current_price(symbol)
         lot_size = BinanceHelper.get_lot_size(client, symbol)
 
@@ -77,7 +82,7 @@ class BinanceHelper:
             except Exception as e:
                 logging.error(f"Error al realizar la compra: {e}")
                 print(f"Error al realizar la compra: {e}")
-                return None
+                return e
         else:
             logging.error("No se pudo obtener la información de LOT_SIZE")
             print("No se pudo obtener la información de LOT_SIZE")
@@ -111,3 +116,14 @@ class BinanceHelper:
             logging.error(f"Error al realizar la venta: {e}")
             print(f"Error al realizar la venta: {e}")
             return None
+    
+    def get_positive_balance_symbols():
+        # Obtener información de todos los tickers
+        tickers = client.get_ticker()
+        positive_balance_symbols = [ticker['symbol'] for ticker in tickers if ticker['symbol'].endswith('USDT') and float(ticker['priceChangePercent']) > 0]
+
+        return positive_balance_symbols
+
+    def get_binance_usdt_balance():
+        balance = client.get_asset_balance(asset="USDT")
+        return float(balance["free"])
