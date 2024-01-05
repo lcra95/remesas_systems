@@ -116,7 +116,7 @@ class getSymbols(Resource):
         }
         register_transaction(data_compra)
         update_symbolo(id_simbolo, {"transaccion" : 1})
-        print("Compra virtual")
+        TelegramHelper.send_telegram_message(f"Compra virtual {id_simbolo}")
 
     @staticmethod
     def venta_virtual(current_price, id_simbolo, cantidad):
@@ -131,7 +131,7 @@ class getSymbols(Resource):
         }
         register_transaction(data_venta)
         update_symbolo(id_simbolo, {"transaccion" : None, "status" : 1})
-
+        TelegramHelper.send_telegram_message(f"Venta virtual {id_simbolo}")
     @staticmethod
     def rsi(id_simbolo, simbolo, current_price, rsi):
         info = {
