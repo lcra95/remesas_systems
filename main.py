@@ -11,6 +11,7 @@ from recursos.Simbolo import getSymbols
 from recursos.Rsi import RsiCalculationsResource
 from modelos.NewSymbols import utilities
 from helpers.binance import BinanceHelper
+from helpers.telegram import TelegramHelper
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -35,8 +36,9 @@ def find():
     list = utilities.check_new_symbols()
     if len(list) > 0:
         for simbolo in list:
-            result = BinanceHelper.buy_crypto(simbolo, 100)
-            
+            result = BinanceHelper.buy_crypto(simbolo, 300)
+            TelegramHelper.send_telegram_message(result)     
+    
     return str(result)
 
 @app.route('/insert_simbolo')
