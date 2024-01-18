@@ -38,7 +38,7 @@ def find():
         for simbolo in list:
             result = BinanceHelper.buy_crypto(simbolo, 300)
             TelegramHelper.send_telegram_message(str(result))     
-    TelegramHelper.send_telegram_message(str(result)) 
+    #TelegramHelper.send_telegram_message(str(result)) 
     return str(result)
 
 @app.route('/insert_simbolo')
