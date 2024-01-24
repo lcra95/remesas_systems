@@ -12,6 +12,14 @@ api_secret = get_credential_by_name('BINANCE_SECRET')
 client = Client(api_key, api_secret)
 
 class BinanceHelper:
+    def get_crypto_stats(symbol):
+        ticker = client.get_ticker(symbol=symbol)
+        return ticker
+        return {
+            "last_price": ticker["lastPrice"],
+            "price_change_percent_24h": ticker["priceChangePercent"]
+        }
+    
     def get_current_price(symbol):
         try:
             ticker = client.get_symbol_ticker(symbol=symbol)
@@ -56,11 +64,11 @@ class BinanceHelper:
 
 
     def buy_crypto(symbol, amount_usd):
-        usdt = BinanceHelper.get_binance_usdt_balance()
-        if usdt < amount_usd:
-            amount_usd = usdt
-        elif usdt == 0:
-            return None
+        #usdt = BinanceHelper.get_binance_usdt_balance()
+        #if usdt < amount_usd:
+        #    amount_usd = usdt
+        #elif usdt == 0:
+        #    return None
         current_price = BinanceHelper.get_current_price(symbol)
         lot_size = BinanceHelper.get_lot_size(client, symbol)
 
