@@ -35,17 +35,14 @@ def home():
 @app.route('/find')
 def find():
     try:
-        result = "None"
-        list = utilities.check_new_symbols()
-        if len(list) > 0:
-            for simbolo in list:
-                result = BinanceHelper.buy_crypto(simbolo, 300)
-                TelegramHelper.send_telegram_message(str(result))     
-        TelegramHelper.send_telegram_message(str(result)) 
+        result = None
+        simbolo = 'JUPUSDT'
+        result = BinanceHelper.buy_crypto(simbolo, 4200)
+        TelegramHelper.send_telegram_message(str(result))     
         return str(result)
     except Exception as e:
-        #TelegramHelper.send_telegram_message('Aun no hay ATLLAYER')
-        return str(list)
+        TelegramHelper.send_telegram_message('Aun no hay JUP')
+        return str(result)
 @app.route('/insert_simbolo')
 def insert():
     ins = utilities.fetch_and_insert_symbols()
