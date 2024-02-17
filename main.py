@@ -36,12 +36,12 @@ def home():
 def find():
     try:
         result = None
-        simbolo = 'JUPUSDT'
+        simbolo = 'PIXELUSDT'
         result = BinanceHelper.buy_crypto(simbolo, 4200)
         TelegramHelper.send_telegram_message(str(result))     
         return str(result)
     except Exception as e:
-        TelegramHelper.send_telegram_message('Aun no hay JUP')
+        TelegramHelper.send_telegram_message('Aun no hay PIXEL')
         return str(result)
 @app.route('/insert_simbolo')
 def insert():
