@@ -37,8 +37,8 @@ def find():
     try:
         result = None
         simbolo = 'PIXELUSDT'
-        result = BinanceHelper.buy_crypto(simbolo, 4200)
-        TelegramHelper.send_telegram_message(str(result))     
+        result = BinanceHelper.buy_crypto(simbolo, 4080)
+        TelegramHelper.send_telegram_message(str(result))
         return str(result)
     except Exception as e:
         TelegramHelper.send_telegram_message('Aun no hay PIXEL')
