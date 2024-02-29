@@ -36,12 +36,12 @@ def home():
 def find():
     try:
         result = None
-        simbolo = 'STRKUSDT'
-        result = BinanceHelper.buy_crypto(simbolo, 360)
+        simbolo = 'PORTALUSDT'
+        result = BinanceHelper.buy_crypto(simbolo, 6250)
         TelegramHelper.send_telegram_message(str(result))
         return str(result)
     except Exception as e:
-        TelegramHelper.send_telegram_message('Aun no hay STRK')
+        TelegramHelper.send_telegram_message('Aun no hay PORTAL')
         return str(result)
 @app.route('/insert_simbolo')
 def insert():
