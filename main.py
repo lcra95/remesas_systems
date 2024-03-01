@@ -36,8 +36,8 @@ def home():
 def find():
     try:
         result = None
-        simbolo = 'PORTALUSDT'
-        result = BinanceHelper.buy_crypto(simbolo, 6250)
+        simbolo = 'AXLUSDT'
+        result = BinanceHelper.buy_crypto(simbolo, 500)
         TelegramHelper.send_telegram_message(str(result))
         return str(result)
     except Exception as e:
